@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { trackGaEvent } from "@/lib/gtag";
 
 type EmailCaptureProps = {
   scanId: string;
@@ -19,6 +20,10 @@ export function EmailCapture({ scanId, websiteUrl }: EmailCaptureProps) {
     event.preventDefault();
     setState("submitting");
     setMessage("");
+    trackGaEvent("lead_form_submitted", {
+      scan_id: scanId,
+      website_url: websiteUrl
+    });
 
     try {
       const response = await fetch("/api/leads", {
@@ -41,6 +46,11 @@ export function EmailCapture({ scanId, websiteUrl }: EmailCaptureProps) {
       if (!response.ok) {
         setState("error");
         setMessage(data.error ?? "Could not save your email. Please try again.");
+        trackGaEvent("lead_form_failed", {
+          error: data.error ?? "unknown",
+          scan_id: scanId,
+          website_url: websiteUrl
+        });
         return;
       }
 
@@ -48,6 +58,11 @@ export function EmailCapture({ scanId, websiteUrl }: EmailCaptureProps) {
       setMessage("Email saved. The pricing page is next.");
 
       if (data.lead?.id) {
+        trackGaEvent("lead_captured", {
+          lead_id: data.lead.id,
+          scan_id: scanId,
+          website_url: websiteUrl
+        });
         window.location.href = `/pricing?scanId=${encodeURIComponent(
           scanId
         )}&leadId=${encodeURIComponent(data.lead.id)}&websiteUrl=${encodeURIComponent(
@@ -57,6 +72,11 @@ export function EmailCapture({ scanId, websiteUrl }: EmailCaptureProps) {
     } catch {
       setState("error");
       setMessage("Could not reach the server. Please try again.");
+      trackGaEvent("lead_form_failed", {
+        error: "network",
+        scan_id: scanId,
+        website_url: websiteUrl
+      });
     }
   }
 

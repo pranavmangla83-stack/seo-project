@@ -2,6 +2,7 @@
 
 import { CheckCircle2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { trackGaEvent } from "@/lib/gtag";
 import { pricingByMarket, type Market, type PricingPlan } from "@/lib/pricing";
 
 type PricingFlowProps = {
@@ -43,10 +44,20 @@ export function PricingFlow({ scanId, leadId, websiteUrl }: PricingFlowProps) {
     trackEvent("pricing_viewed", {
       market: "india"
     });
-  }, [trackEvent]);
+    trackGaEvent("pricing_viewed", {
+      market: "india",
+      scan_id: scanId,
+      website_url: websiteUrl
+    });
+  }, [scanId, trackEvent, websiteUrl]);
 
   async function handleMarketChange(nextMarket: Market) {
     setMarket(nextMarket);
+    trackGaEvent("pricing_market_changed", {
+      market: nextMarket,
+      scan_id: scanId,
+      website_url: websiteUrl
+    });
     await trackEvent("pricing_market_changed", {
       market: nextMarket
     });
@@ -54,6 +65,14 @@ export function PricingFlow({ scanId, leadId, websiteUrl }: PricingFlowProps) {
 
   async function handlePlanClick(plan: PricingPlan) {
     setError("");
+    trackGaEvent("pricing_plan_clicked", {
+      market,
+      plan_id: plan.id,
+      plan_name: plan.name,
+      plan_price: plan.price,
+      scan_id: scanId,
+      website_url: websiteUrl
+    });
 
     const response = await fetch("/api/pricing-clicks", {
       method: "POST",
@@ -73,9 +92,24 @@ export function PricingFlow({ scanId, leadId, websiteUrl }: PricingFlowProps) {
 
     if (!response.ok) {
       setError(data.error ?? "Could not save pricing interest.");
+      trackGaEvent("pricing_plan_save_failed", {
+        error: data.error ?? "unknown",
+        market,
+        plan_id: plan.id,
+        scan_id: scanId,
+        website_url: websiteUrl
+      });
       return;
     }
 
+    trackGaEvent("pricing_interest_saved", {
+      market,
+      plan_id: plan.id,
+      plan_name: plan.name,
+      plan_price: plan.price,
+      scan_id: scanId,
+      website_url: websiteUrl
+    });
     setSelectedPlan({
       market,
       plan

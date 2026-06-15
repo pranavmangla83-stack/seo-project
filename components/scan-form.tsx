@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { SeoReport } from "@/components/seo-report";
+import { trackGaEvent } from "@/lib/gtag";
 import type { ScanReport } from "@/lib/report";
 
 type FormState = "idle" | "submitting" | "success" | "error";
@@ -60,6 +61,9 @@ export function ScanForm() {
     setProgress(12);
     setMessage("");
     setReport(null);
+    trackGaEvent("scan_started", {
+      website_url: websiteUrl
+    });
 
     try {
       const response = await fetch("/api/scans", {
@@ -83,6 +87,10 @@ export function ScanForm() {
       if (!response.ok) {
         setState("error");
         setMessage(data.error ?? "Could not start scan. Please try again.");
+        trackGaEvent("scan_failed", {
+          website_url: websiteUrl,
+          error: data.error ?? "unknown"
+        });
         return;
       }
 
@@ -96,10 +104,20 @@ export function ScanForm() {
           pages: data.pages,
           issues: data.issues
         });
+        trackGaEvent("scan_completed", {
+          issue_count: data.issues.length,
+          page_count: data.pages.length,
+          scan_id: data.scan.id,
+          website_url: data.scan.normalized_url
+        });
       }
     } catch {
       setState("error");
       setMessage("Could not reach the scanner. Please try again.");
+      trackGaEvent("scan_failed", {
+        website_url: websiteUrl,
+        error: "network"
+      });
     } finally {
       isSubmittingRef.current = false;
     }
