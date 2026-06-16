@@ -53,6 +53,13 @@ export default function Home() {
       <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8 lg:px-10">
         <header className="flex items-center justify-between border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3">
+            <img
+              alt="FixMySEO logo"
+              className="h-11 w-11 rounded-md"
+              height={44}
+              src="/logo.svg"
+              width={44}
+            />
             <div>
               <p className="text-base font-semibold">FixMySEO</p>
               <p className="text-sm text-slate-500">Website SEO scanner</p>
