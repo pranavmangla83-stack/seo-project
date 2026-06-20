@@ -58,6 +58,7 @@ type ReportIssue = {
 };
 
 type DisplayFix = {
+  affectedPages?: AffectedPage[];
   id: string;
   pageUrl: string;
   issueType: string;
@@ -67,7 +68,15 @@ type DisplayFix = {
   businessImpact: string;
   recommendation: string;
   problem: string;
+  title: string;
   verificationStatus?: string;
+};
+
+type AffectedPage = {
+  label: string;
+  pageUrl: string;
+  value: string;
+  length: number | null;
 };
 
 type ResolutionFixesProps = {
@@ -203,7 +212,7 @@ function ResolutionCard({
             </span>
             <span className="premium-fix-area">{formatIssueArea(fix.issueType)}</span>
           </span>
-          <strong>{formatResolutionTitle(fix.issueType)}</strong>
+          <strong>{fix.title}</strong>
           <span className="premium-fix-quick-meta">
             <span>{fix.priorityScore}/100 priority</span>
             <span>{formatValue(fix.difficulty)} effort</span>
@@ -227,6 +236,19 @@ function ResolutionCard({
                 problem: fix.problem
               })}
             </span>
+            {fix.affectedPages && fix.affectedPages.length > 0 ? (
+              <div className="premium-affected-pages">
+                {fix.affectedPages.map((page) => (
+                  <div key={`${page.pageUrl}-${page.value}`}>
+                    <strong>{page.label}</strong>
+                    <span>
+                      {page.length !== null ? `${page.length} characters - ` : ""}
+                      {page.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className="premium-fix-action-box">
@@ -246,7 +268,9 @@ function ResolutionCard({
               rel="noreferrer"
               target="_blank"
             >
-              {fix.pageUrl}
+              {fix.affectedPages && fix.affectedPages.length > 1
+                ? `${fix.affectedPages.length} pages affected`
+                : fix.pageUrl}
               <ExternalLink aria-hidden="true" size={14} />
             </a>
             <div className="premium-fix-actions">
@@ -271,9 +295,9 @@ function buildDisplayFixes(resolutions: Resolution[], issues: ReportIssue[]) {
   const resolutionKeys = new Set(
     resolutionFixes.map((fix) => getFixKey(fix.pageUrl, fix.issueType))
   );
-  const issueFixes = issues
-    .filter((issue) => !resolutionKeys.has(getFixKey(issue.pageUrl, issue.issueType)))
-    .map(issueToDisplayFix);
+  const issueFixes = groupReportIssues(
+    issues.filter((issue) => !resolutionKeys.has(getFixKey(issue.pageUrl, issue.issueType)))
+  );
 
   return [...resolutionFixes, ...issueFixes]
     .sort((a, b) => b.priorityScore - a.priorityScore)
@@ -299,7 +323,58 @@ function resolutionToDisplayFix(resolution: Resolution): DisplayFix {
     priorityScore: resolution.priorityScore,
     problem: explanation?.body ?? getBeforeText(resolution.issueType),
     recommendation,
+    title: formatResolutionTitle(resolution.issueType),
     verificationStatus: resolution.verification?.status
+  };
+}
+
+function groupReportIssues(issues: ReportIssue[]) {
+  const groupedTypes = new Set(["weak_page_title", "weak_meta_description"]);
+  const grouped = new Map<string, ReportIssue[]>();
+  const ungrouped: ReportIssue[] = [];
+
+  for (const issue of issues) {
+    if (!groupedTypes.has(issue.issueType)) {
+      ungrouped.push(issue);
+      continue;
+    }
+
+    grouped.set(issue.issueType, [...(grouped.get(issue.issueType) ?? []), issue]);
+  }
+
+  return [
+    ...[...grouped.entries()].map(([issueType, group]) =>
+      groupedIssueToDisplayFix(issueType, group)
+    ),
+    ...ungrouped.map(issueToDisplayFix)
+  ];
+}
+
+function groupedIssueToDisplayFix(issueType: string, issues: ReportIssue[]): DisplayFix {
+  const sortedIssues = [...issues].sort(
+    (a, b) =>
+      (b.priorityScore ?? getSeverityPriorityScore(b.severity)) -
+      (a.priorityScore ?? getSeverityPriorityScore(a.severity))
+  );
+  const firstIssue = sortedIssues[0];
+  const affectedPages = sortedIssues.map(issueToAffectedPage);
+  const priorityScore =
+    sortedIssues[0]?.priorityScore ?? getSeverityPriorityScore(sortedIssues[0]?.severity ?? "low");
+
+  return {
+    affectedPages,
+    businessImpact:
+      firstIssue.businessImpact ?? getIssueBusinessImpact(firstIssue.issueType),
+    difficulty: firstIssue.fixDifficulty ?? "easy",
+    id: `issue-group-${issueType}`,
+    issueType,
+    pageUrl: firstIssue.pageUrl,
+    priority: getIssuePriority(firstIssue.severity, priorityScore),
+    priorityScore,
+    problem: getGroupedProblem(issueType, affectedPages.length),
+    recommendation: getGroupedRecommendation(issueType),
+    title: getGroupedTitle(issueType, affectedPages.length),
+    verificationStatus: "pending"
   };
 }
 
@@ -309,6 +384,7 @@ function issueToDisplayFix(issue: ReportIssue): DisplayFix {
   const priorityScore = issue.priorityScore ?? getSeverityPriorityScore(issue.severity);
 
   return {
+    affectedPages: [issueToAffectedPage(issue)],
     businessImpact:
       issue.businessImpact ?? getIssueBusinessImpact(issue.issueType),
     difficulty: issue.fixDifficulty ?? "medium",
@@ -320,8 +396,99 @@ function issueToDisplayFix(issue: ReportIssue): DisplayFix {
     problem: detailsExplanation ?? issue.message,
     recommendation:
       issue.exactFix ?? suggestedFix ?? getSuggestedFix(issue.issueType),
+    title: getSingleIssueTitle(issue),
     verificationStatus: "pending"
   };
+}
+
+function issueToAffectedPage(issue: ReportIssue): AffectedPage {
+  const value =
+    getStringDetail(issue.details, "title") ??
+    getStringDetail(issue.details, "metaDescription") ??
+    issue.message;
+  const rawLength = issue.details.length;
+
+  return {
+    label: getPageLabel(issue.pageUrl),
+    length: typeof rawLength === "number" ? rawLength : null,
+    pageUrl: issue.pageUrl,
+    value
+  };
+}
+
+function getGroupedTitle(issueType: string, count: number) {
+  if (issueType === "weak_page_title") {
+    return count === 1 ? "Improve 1 page title" : `Improve page titles on ${count} pages`;
+  }
+
+  if (issueType === "weak_meta_description") {
+    return count === 1
+      ? "Improve 1 page description"
+      : `Improve page descriptions on ${count} pages`;
+  }
+
+  return formatResolutionTitle(issueType);
+}
+
+function getGroupedProblem(issueType: string, count: number) {
+  if (issueType === "weak_page_title") {
+    return count === 1
+      ? "One page title is too short, too long, or too generic."
+      : `${count} page titles are too short, too long, or too generic.`;
+  }
+
+  if (issueType === "weak_meta_description") {
+    return count === 1
+      ? "One page description is too short, too long, or not clear enough."
+      : `${count} page descriptions are too short, too long, or not clear enough.`;
+  }
+
+  return getBeforeText(issueType);
+}
+
+function getGroupedRecommendation(issueType: string) {
+  if (issueType === "weak_page_title") {
+    return "Write a unique 50-60 character title for each page. Include the main service, course, product, or location so people know why to click.";
+  }
+
+  if (issueType === "weak_meta_description") {
+    return "Write a unique 120-155 character description for each page. Explain what the page offers and give searchers a clear reason to visit.";
+  }
+
+  return getSuggestedFix(issueType);
+}
+
+function getSingleIssueTitle(issue: ReportIssue) {
+  if (issue.issueType === "weak_page_title") {
+    return `Improve ${getPageLabel(issue.pageUrl)} title`;
+  }
+
+  if (issue.issueType === "weak_meta_description") {
+    return `Improve ${getPageLabel(issue.pageUrl)} description`;
+  }
+
+  return formatResolutionTitle(issue.issueType);
+}
+
+function getPageLabel(pageUrl: string) {
+  try {
+    const url = new URL(pageUrl);
+    const path = url.pathname.replace(/^\/|\/$/g, "");
+
+    if (!path) {
+      return "Homepage";
+    }
+
+    return path
+      .split("/")
+      .filter(Boolean)
+      .at(-1)!
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  } catch {
+    return "This page";
+  }
 }
 
 function getFixKey(pageUrl: string, issueType: string) {

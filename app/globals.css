@@ -2000,6 +2000,34 @@ button {
   line-height: 1.75rem;
 }
 
+.premium-affected-pages {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.premium-affected-pages div {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid #e6e0d8;
+  border-radius: 0.85rem;
+  background: #fbfaf7;
+  padding: 0.85rem 1rem;
+}
+
+.premium-affected-pages strong {
+  color: #071225;
+  font-size: 0.98rem;
+  font-weight: 850;
+}
+
+.premium-fix-story .premium-affected-pages span {
+  margin-top: 0;
+  color: #625f68;
+  font-size: 0.98rem;
+  line-height: 1.5rem;
+}
+
 .premium-fix-action-box {
   flex-direction: column;
   margin-top: 1.25rem;
