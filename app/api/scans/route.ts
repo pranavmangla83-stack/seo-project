@@ -8,19 +8,49 @@ import { normalizeWebsiteUrl } from "@/lib/url";
 import { planResolutionsForScan } from "@/resolution/planner";
 
 export async function POST(request: Request) {
-  let websiteUrl: string;
   let normalizedUrl: string;
   let requestCampaign: unknown = {};
+  let body: {
+    websiteUrl?: unknown;
+    campaign?: unknown;
+  } | null = null;
 
   try {
-    const body = (await request.json()) as {
+    body = (await request.json()) as {
       websiteUrl?: unknown;
       campaign?: unknown;
     };
-    websiteUrl = typeof body.websiteUrl === "string" ? body.websiteUrl : "";
-    normalizedUrl = normalizeWebsiteUrl(websiteUrl);
-    requestCampaign = body.campaign;
   } catch {
+    return NextResponse.json(
+      { error: "Enter a valid website URL." },
+      { status: 400 }
+    );
+  }
+
+  const websiteUrl = typeof body.websiteUrl === "string" ? body.websiteUrl : "";
+  requestCampaign = body.campaign;
+
+  try {
+    normalizedUrl = normalizeWebsiteUrl(websiteUrl);
+  } catch (error) {
+    if (hasSupabaseConfig()) {
+      const supabase = createSupabaseServerClient();
+
+      await supabase.from("events").insert({
+        event_name: "scan_failed",
+        website_url: websiteUrl.trim(),
+        metadata: {
+          reason: "invalid_url",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Enter a valid website URL.",
+          source: "landing_page",
+          campaign: sanitizeCampaign(requestCampaign)
+        }
+      });
+    }
+
     return NextResponse.json(
       { error: "Enter a valid website URL." },
       { status: 400 }
