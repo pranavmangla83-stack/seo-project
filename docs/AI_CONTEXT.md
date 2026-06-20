@@ -28,7 +28,7 @@ Included:
 - MVP Issue Resolution Engine that turns the top scan issues into resolution records
 - AI-generated resolution output for missing titles, missing meta descriptions, and missing H1s
 - Dedicated premium-style report route at `/reports/[scanId]`
-- Top fixes UI that presents generated resolution output as a business-friendly action plan
+- Top fixes UI that presents generated resolution output plus prioritized scan issues as a business-friendly action plan
 - Free report preview
 - "Fix these issues for me" CTA
 - Email capture after CTA click
@@ -107,7 +107,7 @@ AI Coding Rules:
 
 ## Current Architecture Summary
 
-FixMySEO is a Next.js web app. A user enters a website or plain domain, the backend normalizes the URL, crawls up to 5 SMB-important pages using homepage links plus sitemap.xml discovery, extracts reusable SEO page facts, classifies page importance, detects rule-based SEO issues, enriches issues with AI explanations, calculates priority/business fields, and shows a free report focused on top traffic blockers. After `scan_issues` are saved, the MVP Resolution Engine creates up to 5 `seo_resolutions` records for the highest-priority supported issues, stores generated outputs, and creates pending verification expectations. The inline report shows issues and top fixes; `/reports/[scanId]` shows a premium business SEO report with diagnosis, health score, top fix, executive summary, action-plan cards, issue breakdown, and page importance. While scanning, the UI shows a progress panel and prevents duplicate submissions. When the report is ready, the page auto-scrolls to the report. If the user clicks the fix CTA, the app collects email, shows a market-toggle pricing page, records the selected plan click, and displays a launch-soon message.
+FixMySEO is a Next.js web app. A user enters a website or plain domain, the backend normalizes the URL, crawls up to 5 SMB-important pages using homepage links plus sitemap.xml discovery, extracts reusable SEO page facts, classifies page importance, detects rule-based SEO issues, enriches issues with AI explanations, calculates priority/business fields, and stores a free report focused on top traffic blockers. After `scan_issues` are saved, the MVP Resolution Engine creates up to 5 `seo_resolutions` records for the highest-priority supported issues, stores generated outputs, and creates pending verification expectations. When scanning finishes, the UI redirects to `/reports/[scanId]`, which shows a premium business SEO report with diagnosis, health score, top fixes, executive summary, grouped action-plan cards, issue breakdown, and page importance. The report top fixes merge generated `seo_resolutions` with prioritized `scan_issues` so important title/meta findings are not hidden when no generated resolution exists. If the user clicks the fix CTA, the app collects email, shows a market-toggle pricing page, records the selected plan click, and displays a launch-soon message.
 
 ## Key Files and Folders
 
@@ -146,6 +146,7 @@ FixMySEO is a Next.js web app. A user enters a website or plain domain, the back
 - MVP resolution types currently supported: missing title, missing meta description, missing H1, thin content, noindex, and broken internal links.
 - AI resolution generation is currently limited to missing title, missing meta description, and missing H1.
 - Resolution UI currently displays top fixes and generated output, but mark-done, edit/regenerate, and real verification remain out of scope/pending.
+- Repeated weak page title and weak meta description issues should be grouped into one action card per issue type, with affected pages and character counts listed inside the card.
 - `seo_issues` is only an architecture/conversation name. The real persisted issue table is `scan_issues`.
 - No accounts in MVP.
 - No payments in MVP.
@@ -183,6 +184,8 @@ Track:
 - `fix_cta_clicked`
 
 Each event should include useful context when available: website URL, scan ID, market shown, plan clicked, price shown, and timestamp.
+
+Invalid homepage URL submissions should be tracked as `scan_failed` with useful metadata such as `reason: "invalid_url"` and the attempted input when safe to store.
 
 GA4 automatic events like `page_view`, `session_start`, `first_visit`, and `form_start` may also appear. Use `lead_captured` as the main ad conversion when enough data exists; avoid using `scan_failed` or ordinary `page_view` as primary conversions.
 
