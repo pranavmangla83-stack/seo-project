@@ -44,6 +44,10 @@ type ScanIssueRow = {
   issue_type: string;
   severity: "high" | "medium" | "low";
   message: string;
+  business_impact: string | null;
+  fix_difficulty: string | null;
+  exact_fix: string | null;
+  details: Record<string, unknown>;
   priority_score: number | null;
 };
 
@@ -146,7 +150,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
       .order("importance_score", { ascending: false }),
     supabase
       .from("scan_issues")
-      .select("id, page_url, issue_type, severity, message, priority_score")
+      .select(
+        "id, page_url, issue_type, severity, message, business_impact, fix_difficulty, exact_fix, details, priority_score"
+      )
       .eq("scan_id", scanId)
       .order("priority_score", { ascending: false }),
     supabase
@@ -278,7 +284,21 @@ export default async function ReportPage({ params }: ReportPageProps) {
         </section>
 
         <section className="report-top-fixes-panel" id="top-fixes">
-          <ResolutionFixes scanId={scanId} />
+          <ResolutionFixes
+            issues={issueRows.map((issue) => ({
+              businessImpact: issue.business_impact,
+              details: issue.details,
+              exactFix: issue.exact_fix,
+              fixDifficulty: issue.fix_difficulty,
+              id: issue.id,
+              issueType: issue.issue_type,
+              message: issue.message,
+              pageUrl: issue.page_url,
+              priorityScore: issue.priority_score,
+              severity: issue.severity
+            }))}
+            scanId={scanId}
+          />
         </section>
 
         <section className="report-priority-section">
