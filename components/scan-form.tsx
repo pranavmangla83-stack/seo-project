@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { SeoReport } from "@/components/seo-report";
 import {
   GOOGLE_ADS_SCAN_CONVERSION_LABEL,
   trackGaEvent,
@@ -13,13 +13,12 @@ import type { ScanReport } from "@/lib/report";
 type FormState = "idle" | "submitting" | "success" | "error";
 
 export function ScanForm() {
+  const router = useRouter();
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [state, setState] = useState<FormState>("idle");
   const [message, setMessage] = useState("");
-  const [report, setReport] = useState<ScanReport | null>(null);
   const [progress, setProgress] = useState(0);
   const isSubmittingRef = useRef(false);
-  const reportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (state !== "submitting") {
@@ -40,19 +39,6 @@ export function ScanForm() {
     return () => window.clearInterval(interval);
   }, [state]);
 
-  useEffect(() => {
-    if (!report) {
-      return;
-    }
-
-    window.setTimeout(() => {
-      reportRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }, 100);
-  }, [report]);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -64,7 +50,6 @@ export function ScanForm() {
     setState("submitting");
     setProgress(12);
     setMessage("");
-    setReport(null);
     trackGaEvent("scan_started", {
       website_url: websiteUrl
     });
@@ -100,14 +85,9 @@ export function ScanForm() {
 
       setState("success");
       setProgress(100);
-      setMessage("Report is ready. Showing your SEO audit below.");
+      setMessage("Report is ready. Opening your SEO audit.");
 
       if (data.scan && data.pages && data.issues) {
-        setReport({
-          scan: data.scan,
-          pages: data.pages,
-          issues: data.issues
-        });
         trackGaEvent("scan_completed", {
           issue_count: data.issues.length,
           page_count: data.pages.length,
@@ -118,6 +98,7 @@ export function ScanForm() {
           scan_id: data.scan.id,
           website_url: data.scan.normalized_url
         });
+        router.push(`/reports/${data.scan.id}`);
       }
     } catch {
       setState("error");
@@ -213,11 +194,6 @@ export function ScanForm() {
           </div>
         ) : null}
       </form>
-      {report ? (
-        <div ref={reportRef}>
-          <SeoReport report={report} />
-        </div>
-      ) : null}
     </>
   );
 }
