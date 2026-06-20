@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
 import type { CrawledPage } from "@/lib/crawler";
+import { extractSeoPageFacts } from "@/lib/page-facts";
 
 export type SeoIssue = {
   pageUrl: string;
@@ -10,11 +11,24 @@ export type SeoIssue = {
     | "missing_image_alt"
     | "broken_internal_link"
     | "blocked_from_indexing"
-    | "thin_content";
+    | "thin_content"
+    | "missing_canonical"
+    | "canonical_points_elsewhere"
+    | "duplicate_page_title"
+    | "duplicate_meta_description";
   severity: "high" | "medium" | "low";
   message: string;
   explanation?: string;
   suggestedFix?: string;
+  priority?: number;
+  pageImportance?: number;
+  businessImpact?: string;
+  fixDifficulty?: "easy" | "medium" | "hard";
+  confidence?: "high" | "medium" | "low";
+  estimatedImpact?: "high" | "medium" | "low";
+  exactFix?: string;
+  priorityScore?: number;
+  sortScore?: number;
   details?: Record<string, unknown>;
 };
 
@@ -26,6 +40,7 @@ export async function detectSeoIssues(pages: CrawledPage[]) {
     issues.push(...detectPageIssues(page));
   }
 
+  issues.push(...detectDuplicateMetadata(fetchedPages));
   const brokenLinks = await detectBrokenInternalLinks(fetchedPages);
   issues.push(...brokenLinks);
 
@@ -34,101 +49,154 @@ export async function detectSeoIssues(pages: CrawledPage[]) {
 
 function detectPageIssues(page: CrawledPage) {
   const html = page.html ?? "";
-  const $ = cheerio.load(html);
+  const facts = extractSeoPageFacts(html, page.url);
   const issues: SeoIssue[] = [];
-  const title = $("title").first().text().trim();
-  const metaDescription = $('meta[name="description"]').attr("content")?.trim() ?? "";
-  const h1Count = $("h1").length;
-  const images = $("img").toArray();
-  const imagesMissingAlt = images.filter((image) => {
-    const alt = $(image).attr("alt");
-    return alt === undefined || alt.trim() === "";
-  });
-  const robotsMeta = $('meta[name="robots"]').attr("content")?.toLowerCase() ?? "";
-  const bodyText = $("body").text().replace(/\s+/g, " ").trim();
-  const wordCount = bodyText ? bodyText.split(" ").filter(Boolean).length : 0;
 
-  if (!title || title.length < 20 || title.length > 65) {
+  if (!facts.title || facts.title.length < 20 || facts.title.length > 65) {
     issues.push({
       pageUrl: page.url,
       issueType: "weak_page_title",
-      severity: !title ? "high" : "medium",
-      message: !title
+      severity: !facts.title ? "high" : "medium",
+      message: !facts.title
         ? "This page is missing a page title."
         : "This page title may be too short or too long.",
       details: {
-        title,
-        length: title.length,
+        title: facts.title,
+        length: facts.title.length,
         recommendedLength: "20-65 characters"
       }
     });
   }
 
-  if (!metaDescription || metaDescription.length < 70 || metaDescription.length > 160) {
+  if (
+    !facts.metaDescription ||
+    facts.metaDescription.length < 70 ||
+    facts.metaDescription.length > 160
+  ) {
     issues.push({
       pageUrl: page.url,
       issueType: "weak_meta_description",
-      severity: !metaDescription ? "medium" : "low",
-      message: !metaDescription
+      severity: !facts.metaDescription ? "medium" : "low",
+      message: !facts.metaDescription
         ? "This page is missing a meta description."
         : "This meta description may be too short or too long.",
       details: {
-        metaDescription,
-        length: metaDescription.length,
+        metaDescription: facts.metaDescription,
+        length: facts.metaDescription.length,
         recommendedLength: "70-160 characters"
       }
     });
   }
 
-  if (h1Count !== 1) {
+  if (facts.h1Count !== 1) {
     issues.push({
       pageUrl: page.url,
       issueType: "bad_heading_structure",
-      severity: h1Count === 0 ? "medium" : "low",
+      severity: facts.h1Count === 0 ? "medium" : "low",
       message:
-        h1Count === 0
+        facts.h1Count === 0
           ? "This page does not have an H1 heading."
           : "This page has more than one H1 heading.",
       details: {
-        h1Count
+        h1Count: facts.h1Count
       }
     });
   }
 
-  if (imagesMissingAlt.length > 0) {
+  if (facts.missingAltCount > 0) {
     issues.push({
       pageUrl: page.url,
       issueType: "missing_image_alt",
-      severity: imagesMissingAlt.length > 5 ? "medium" : "low",
+      severity: facts.missingAltCount > 5 ? "medium" : "low",
       message: "Some images on this page are missing alt text.",
       details: {
-        totalImages: images.length,
-        missingAltCount: imagesMissingAlt.length
+        totalImages: facts.totalImages,
+        missingAltCount: facts.missingAltCount
       }
     });
   }
 
-  if (robotsMeta.includes("noindex")) {
+  if (facts.robotsMeta.includes("noindex")) {
     issues.push({
       pageUrl: page.url,
       issueType: "blocked_from_indexing",
       severity: "high",
       message: "This page has a noindex tag, so Google may not show it in search.",
       details: {
-        robotsMeta
+        robotsMeta: facts.robotsMeta
       }
     });
   }
 
-  if (wordCount < 250) {
+  if (facts.wordCount < 250) {
     issues.push({
       pageUrl: page.url,
       issueType: "thin_content",
-      severity: wordCount < 100 ? "medium" : "low",
+      severity: facts.wordCount < 100 ? "medium" : "low",
       message: "This page may not have enough written content for search engines.",
       details: {
-        wordCount,
+        wordCount: facts.wordCount,
         recommendedMinimum: 250
+      }
+    });
+  }
+
+  if (!facts.canonicalUrl) {
+    issues.push({
+      pageUrl: page.url,
+      issueType: "missing_canonical",
+      severity: "low",
+      message: "This page does not declare a canonical URL.",
+      details: {
+        canonicalUrl: ""
+      }
+    });
+  } else if (normalizeForComparison(facts.canonicalUrl) !== normalizeForComparison(page.url)) {
+    issues.push({
+      pageUrl: page.url,
+      issueType: "canonical_points_elsewhere",
+      severity: "medium",
+      message: "This page points search engines to a different canonical URL.",
+      details: {
+        canonicalUrl: facts.canonicalUrl,
+        pageUrl: page.url
+      }
+    });
+  }
+
+  return issues;
+}
+
+function detectDuplicateMetadata(pages: CrawledPage[]) {
+  const issues: SeoIssue[] = [];
+  const titleGroups = groupByNormalizedValue(pages, (page) => page.title ?? "");
+  const metaGroups = groupByNormalizedValue(
+    pages,
+    (page) => page.metaDescription ?? ""
+  );
+
+  for (const group of titleGroups) {
+    issues.push({
+      pageUrl: getMostImportantPage(group).url,
+      issueType: "duplicate_page_title",
+      severity: "medium",
+      message: "Multiple scanned pages use the same page title.",
+      details: {
+        duplicateTitle: group[0].title,
+        affectedPages: group.map((page) => page.url)
+      }
+    });
+  }
+
+  for (const group of metaGroups) {
+    issues.push({
+      pageUrl: getMostImportantPage(group).url,
+      issueType: "duplicate_meta_description",
+      severity: "low",
+      message: "Multiple scanned pages use the same meta description.",
+      details: {
+        duplicateMetaDescription: group[0].metaDescription,
+        affectedPages: group.map((page) => page.url)
       }
     });
   }
@@ -211,4 +279,44 @@ async function getLinkStatus(url: string) {
 
 function dedupe(urls: string[]) {
   return Array.from(new Set(urls));
+}
+
+function groupByNormalizedValue(
+  pages: CrawledPage[],
+  getValue: (page: CrawledPage) => string
+) {
+  const groups = new Map<string, CrawledPage[]>();
+
+  for (const page of pages) {
+    const value = getValue(page).replace(/\s+/g, " ").trim().toLowerCase();
+
+    if (!value) {
+      continue;
+    }
+
+    groups.set(value, [...(groups.get(value) ?? []), page]);
+  }
+
+  return Array.from(groups.values()).filter((group) => group.length > 1);
+}
+
+function getMostImportantPage(pages: CrawledPage[]) {
+  return [...pages].sort(
+    (a, b) => (b.importanceScore ?? 0) - (a.importanceScore ?? 0)
+  )[0];
+}
+
+function normalizeForComparison(input: string) {
+  try {
+    const url = new URL(input);
+    url.hash = "";
+
+    if (url.pathname !== "/" && url.pathname.endsWith("/")) {
+      url.pathname = url.pathname.slice(0, -1);
+    }
+
+    return url.toString().toLowerCase();
+  } catch {
+    return input.trim().toLowerCase();
+  }
 }

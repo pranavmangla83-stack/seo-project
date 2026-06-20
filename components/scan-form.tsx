@@ -3,7 +3,11 @@
 import { ArrowRight } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { SeoReport } from "@/components/seo-report";
-import { trackGaEvent } from "@/lib/gtag";
+import {
+  GOOGLE_ADS_SCAN_CONVERSION_LABEL,
+  trackGaEvent,
+  trackGoogleAdsConversion
+} from "@/lib/gtag";
 import type { ScanReport } from "@/lib/report";
 
 type FormState = "idle" | "submitting" | "success" | "error";
@@ -110,6 +114,10 @@ export function ScanForm() {
           scan_id: data.scan.id,
           website_url: data.scan.normalized_url
         });
+        trackGoogleAdsConversion(GOOGLE_ADS_SCAN_CONVERSION_LABEL, {
+          scan_id: data.scan.id,
+          website_url: data.scan.normalized_url
+        });
       }
     } catch {
       setState("error");
@@ -147,7 +155,7 @@ export function ScanForm() {
         </div>
       ) : null}
       <form
-        className="mt-4 max-w-2xl rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+        className="home-scan-form"
         onSubmit={handleSubmit}
       >
         <label className="sr-only" htmlFor="website-url">
@@ -155,7 +163,7 @@ export function ScanForm() {
         </label>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
-            className="min-h-12 flex-1 rounded-md border border-slate-200 bg-white px-4 text-base text-slate-950 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+            className="home-scan-input"
             id="website-url"
             name="website-url"
             onChange={(event) => setWebsiteUrl(event.target.value)}
@@ -164,7 +172,7 @@ export function ScanForm() {
             value={websiteUrl}
           />
           <button
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 text-base font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="home-scan-button"
             disabled={state === "submitting"}
             type="submit"
           >
@@ -174,7 +182,7 @@ export function ScanForm() {
         </div>
         {message ? (
           <p
-            className={`mt-3 rounded-md px-3 py-2 text-sm ${
+            className={`home-scan-message ${
               state === "success"
                 ? "bg-emerald-50 text-emerald-800"
                 : "bg-rose-50 text-rose-800"

@@ -1,7 +1,19 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
-import { CLARITY_PROJECT_ID, GA_MEASUREMENT_ID } from "@/lib/gtag";
+import {
+  CLARITY_PROJECT_ID,
+  GA_MEASUREMENT_ID,
+  GOOGLE_ADS_CONVERSION_ID
+} from "@/lib/gtag";
 import "./globals.css";
+
+const gtagScriptId = GA_MEASUREMENT_ID ?? GOOGLE_ADS_CONVERSION_ID;
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono"
+});
 
 export const metadata: Metadata = {
   title: "FixMySEO | Website SEO Checker and SEO Audit Tool",
@@ -20,20 +32,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html className={`${geistSans.variable} ${geistMono.variable}`} lang="en">
       <body>
-        {GA_MEASUREMENT_ID ? (
+        {gtagScriptId ? (
           <>
             <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${gtagScriptId}`}
               strategy="afterInteractive"
             />
-            <Script id="google-analytics" strategy="afterInteractive">
+            <Script id="google-tag" strategy="afterInteractive">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', '${GA_MEASUREMENT_ID}');
+                ${GA_MEASUREMENT_ID ? `gtag('config', '${GA_MEASUREMENT_ID}');` : ""}
+                ${GOOGLE_ADS_CONVERSION_ID ? `gtag('config', '${GOOGLE_ADS_CONVERSION_ID}');` : ""}
               `}
             </Script>
           </>

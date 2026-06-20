@@ -29,5 +29,13 @@ export function getSuggestedFix(issueType: SeoIssue["issueType"]) {
       return "Remove the noindex instruction if this page should appear in Google.";
     case "thin_content":
       return "Add more useful details, services, FAQs, examples, or local information.";
+    case "missing_canonical":
+      return "Add a canonical tag that points to the preferred version of this page.";
+    case "canonical_points_elsewhere":
+      return "Check whether this page should point to itself or intentionally point to another canonical URL.";
+    case "duplicate_page_title":
+      return "Write a unique page title for each affected page.";
+    case "duplicate_meta_description":
+      return "Write a unique meta description for each affected page.";
   }
 }

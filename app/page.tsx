@@ -2,17 +2,20 @@ import {
   CheckCircle2,
   Clock,
   Link2,
+  SearchCheck,
+  ShieldCheck,
   Zap
 } from "lucide-react";
 import { ScanForm } from "@/components/scan-form";
 
 const checks = [
-  "Website SEO checker",
   "SEO checker",
-  "SEO optimizer",
+  "Improve SEO",
+  "Website optimization",
   "SEO audit",
   "SEO optimization",
-  "Technical SEO"
+  "SEO optimizer",
+  "SEO analyzer"
 ];
 
 const impactSteps = [
@@ -49,38 +52,36 @@ const landingPlans = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 sm:px-8 lg:px-10">
-        <header className="flex items-center justify-between border-b border-slate-200 pb-4">
-          <div className="flex items-center gap-3">
-            <img
-              alt="FixMySEO logo"
-              className="h-11 w-11 rounded-md"
-              height={44}
-              src="/logo.svg"
-              width={44}
-            />
+    <main className="home-page">
+      <header className="home-topbar">
+        <div className="home-topbar-inner">
+          <div className="home-brand">
+            <span className="home-brand-mark">
+              <SearchCheck aria-hidden="true" size={18} />
+            </span>
             <div>
-              <p className="text-base font-semibold">FixMySEO</p>
-              <p className="text-sm text-slate-500">Website SEO scanner</p>
+              <p>FixMySEO</p>
+              <span>Website SEO scanner</span>
             </div>
           </div>
-          <div className="hidden items-center gap-2 text-sm text-slate-600 sm:flex">
+          <div className="home-topbar-proof">
             <CheckCircle2 aria-hidden="true" size={16} />
             No login needed
           </div>
-        </header>
+        </div>
+      </header>
 
-        <div className="flex flex-1 items-start py-4 lg:hero-top lg:py-8">
-          <div className="max-w-2xl">
-            <p className="mb-3 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+      <section className="home-hero-section">
+        <div className="home-shell home-hero-grid">
+          <div className="home-hero-copy">
+            <p className="home-kicker">
               <Link2 aria-hidden="true" size={16} />
-              Website SEO checker for quick SEO audits
+              SEO checker for quick website audits
             </p>
-            <h1 className="text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1>
               Find SEO Issues and Improve Your Website Rankings
             </h1>
-            <p className="mt-3 max-w-xl text-lg leading-8 text-slate-600">
+            <p className="home-hero-subtitle">
               Scan your website, identify SEO problems, and get actionable
               fixes for titles, meta descriptions, content, technical SEO, and
               on-page optimization.
@@ -88,43 +89,60 @@ export default function Home() {
 
             <ScanForm />
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="home-keyword-pills">
               {checks.map((check) => (
                 <span
-                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
                   key={check}
                 >
                   {check}
                 </span>
               ))}
             </div>
-
-            <div className="mt-8 grid gap-4 text-sm leading-6 text-slate-600">
-              <p>
-                Use FixMySEO as a website SEO checker to run a fast SEO audit
-                and find issues that may be holding back your rankings.
-              </p>
-              <p>
-                The SEO checker focuses on practical SEO optimization signals
-                like page titles, meta descriptions, content quality, technical
-                SEO basics, and on-page optimization.
-              </p>
-            </div>
           </div>
+
+          <aside className="home-preview-card" aria-label="Example SEO report preview">
+            <div className="home-preview-header">
+              <span>
+                <span className="report-status-dot" />
+                Check complete
+              </span>
+              <strong>example.com</strong>
+            </div>
+            <div className="home-preview-score">
+              <div className="report-score-ring" style={{ background: "conic-gradient(#e58a1f 68%, #eef2f7 0)" }}>
+                <div>
+                  <span>68</span>
+                  <small>out of 100</small>
+                </div>
+              </div>
+              <div>
+                <p>Website health</p>
+                <span>Needs attention</span>
+              </div>
+            </div>
+            <div className="home-preview-fixes">
+              {impactSteps.slice(0, 3).map((step, index) => (
+                <div key={step}>
+                  <span>{index + 1}</span>
+                  <p>{step}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
         </div>
       </section>
 
-      <section className="min-h-screen border-t border-slate-200 bg-white">
-        <div className="mx-auto grid min-h-screen w-full max-w-6xl items-center gap-10 px-5 py-10 sm:px-8 lg:landing-two-col lg:px-10 lg:py-14">
+      <section className="home-section">
+        <div className="home-shell home-value-grid">
           <div>
-            <p className="mb-4 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+            <p className="home-kicker">
               <Zap aria-hidden="true" size={16} />
               SEO optimizer for practical fixes
             </p>
-            <h2 className="text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">
+            <h2>
               Stop guessing why your website isn&apos;t getting traffic.
             </h2>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
+            <p>
               We scan your site, identify the issues with the biggest ranking
               impact, prioritize them, and help you fix them in minutes, not
               hours. No SEO expertise required. Just follow the recommendations
@@ -132,80 +150,70 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-4">
+          <div className="home-steps-card">
             {impactSteps.map((step, index) => (
               <div
-                className="flex items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5"
+                className="home-step"
                 key={step}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-950 text-white">
+                <span>
                   {index + 1}
-                </div>
-                <p className="font-semibold text-slate-950">{step}</p>
+                </span>
+                <p>{step}</p>
               </div>
             ))}
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5">
-              <div className="flex items-start gap-3">
-                <Clock
-                  aria-hidden="true"
-                  className="text-emerald-800"
-                  size={22}
-                />
-                <p className="text-sm leading-6 text-emerald-800">
-                  Built for business owners who want clear SEO recommendations,
-                  not a confusing technical report.
-                </p>
-              </div>
+            <div className="home-note">
+              <Clock aria-hidden="true" size={20} />
+              <p>
+                Built for business owners who want clear SEO recommendations,
+                not a confusing technical report.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="min-h-screen border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-emerald-800">
+      <section className="home-section home-pricing-section">
+        <div className="home-shell">
+          <div className="home-section-heading">
+            <p>
               India pricing
             </p>
-            <h2 className="mt-2 text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">
+            <h2>
               Start with an affordable SEO audit
             </h2>
-            <p className="mt-5 text-lg leading-8 text-slate-600">
+            <span>
               Choose the level of SEO optimization help you want after your
               website scan.
-            </p>
+            </span>
           </div>
 
-          <div className="landing-pricing-grid mt-10">
+          <div className="home-pricing-grid">
             {landingPlans.map((plan) => (
-              <article className="pricing-plan" key={plan.name}>
-                <div className="flex items-start justify-between gap-4">
+              <article className="home-plan-card" key={plan.name}>
+                <div className="home-plan-top">
                   <div>
-                    <h3 className="text-2xl font-semibold text-slate-950">
+                    <h3>
                       {plan.name}
                     </h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                    <p>
                       {plan.description}
                     </p>
                   </div>
-                  <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+                  <span>
                     India
-                  </p>
+                  </span>
                 </div>
 
-                <p className="mt-5 text-4xl font-semibold text-slate-950">
+                <strong>
                   {plan.price}
-                </p>
+                </strong>
 
-                <div className="mt-5 grid gap-3">
+                <div className="home-plan-features">
                   {plan.features.map((feature) => (
-                    <div className="flex items-start gap-3" key={feature}>
-                      <CheckCircle2
-                        aria-hidden="true"
-                        className="text-emerald-800"
-                        size={18}
-                      />
-                      <p className="text-sm leading-6 text-slate-600">
+                    <div key={feature}>
+                      <ShieldCheck aria-hidden="true" size={18} />
+                      <p>
                         {feature}
                       </p>
                     </div>

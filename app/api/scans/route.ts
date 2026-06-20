@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { addAiSuggestions } from "@/lib/ai-suggestions";
 import { crawlImportantPages } from "@/lib/crawler";
+import { prioritizeSeoIssues } from "@/lib/issue-prioritization";
 import { detectSeoIssues } from "@/lib/seo-checks";
 import { createSupabaseServerClient, hasSupabaseConfig } from "@/lib/supabase/server";
 import { normalizeWebsiteUrl } from "@/lib/url";
+import { planResolutionsForScan } from "@/resolution/planner";
 
 export async function POST(request: Request) {
   let websiteUrl: string;
@@ -73,13 +75,22 @@ export async function POST(request: Request) {
         url: page.url,
         status: page.status,
         http_status: page.httpStatus ?? null,
-        title: page.title ?? null
+        title: page.title ?? null,
+        normalized_url: page.url,
+        page_type: page.pageType ?? null,
+        discovery_source: page.discoverySource,
+        importance_score: page.importanceScore ?? null,
+        importance_reason: page.importanceReason ?? null,
+        canonical_url: page.canonicalUrl ?? null,
+        word_count: page.wordCount ?? null,
+        meta_description: page.metaDescription ?? null
       }))
     );
   }
 
   const detectedIssues = await detectSeoIssues(pages);
-  const issues = await addAiSuggestions(detectedIssues);
+  const issuesWithSuggestions = await addAiSuggestions(detectedIssues);
+  const issues = prioritizeSeoIssues(issuesWithSuggestions, pages);
 
   if (issues.length > 0) {
     await supabase.from("scan_issues").insert(
@@ -89,6 +100,15 @@ export async function POST(request: Request) {
         issue_type: issue.issueType,
         severity: issue.severity,
         message: issue.message,
+        priority: issue.priority ?? null,
+        page_importance: issue.pageImportance ?? null,
+        business_impact: issue.businessImpact ?? null,
+        fix_difficulty: issue.fixDifficulty ?? null,
+        confidence: issue.confidence ?? null,
+        estimated_impact: issue.estimatedImpact ?? null,
+        exact_fix: issue.exactFix ?? null,
+        priority_score: issue.priorityScore ?? null,
+        sort_score: issue.sortScore ?? null,
         details: {
           ...(issue.details ?? {}),
           explanation: issue.explanation ?? null,
@@ -96,6 +116,31 @@ export async function POST(request: Request) {
         }
       }))
     );
+
+    try {
+      const resolutionResult = await planResolutionsForScan(supabase, scan.id, {
+        limit: 5
+      });
+
+      await supabase.from("events").insert({
+        event_name: "resolutions_planned",
+        scan_id: scan.id,
+        website_url: normalizedUrl,
+        metadata: {
+          created: resolutionResult.created,
+          skipped: resolutionResult.skipped
+        }
+      });
+    } catch (error) {
+      await supabase.from("events").insert({
+        event_name: "resolution_planning_failed",
+        scan_id: scan.id,
+        website_url: normalizedUrl,
+        metadata: {
+          message: error instanceof Error ? error.message : "Unknown error"
+        }
+      });
+    }
   }
 
   await supabase

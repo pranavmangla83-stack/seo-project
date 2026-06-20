@@ -2,7 +2,11 @@
 
 import { ArrowRight } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { trackGaEvent } from "@/lib/gtag";
+import {
+  GOOGLE_ADS_LEAD_CONVERSION_LABEL,
+  trackGaEvent,
+  trackGoogleAdsConversion
+} from "@/lib/gtag";
 
 type EmailCaptureProps = {
   scanId: string;
@@ -59,6 +63,11 @@ export function EmailCapture({ scanId, websiteUrl }: EmailCaptureProps) {
 
       if (data.lead?.id) {
         trackGaEvent("lead_captured", {
+          lead_id: data.lead.id,
+          scan_id: scanId,
+          website_url: websiteUrl
+        });
+        trackGoogleAdsConversion(GOOGLE_ADS_LEAD_CONVERSION_LABEL, {
           lead_id: data.lead.id,
           scan_id: scanId,
           website_url: websiteUrl

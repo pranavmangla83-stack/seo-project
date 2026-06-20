@@ -2,7 +2,11 @@
 
 import { CheckCircle2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { trackGaEvent } from "@/lib/gtag";
+import {
+  GOOGLE_ADS_PRICING_CONVERSION_LABEL,
+  trackGaEvent,
+  trackGoogleAdsConversion
+} from "@/lib/gtag";
 import { pricingByMarket, type Market, type PricingPlan } from "@/lib/pricing";
 
 type PricingFlowProps = {
@@ -103,6 +107,14 @@ export function PricingFlow({ scanId, leadId, websiteUrl }: PricingFlowProps) {
     }
 
     trackGaEvent("pricing_interest_saved", {
+      market,
+      plan_id: plan.id,
+      plan_name: plan.name,
+      plan_price: plan.price,
+      scan_id: scanId,
+      website_url: websiteUrl
+    });
+    trackGoogleAdsConversion(GOOGLE_ADS_PRICING_CONVERSION_LABEL, {
       market,
       plan_id: plan.id,
       plan_name: plan.name,
