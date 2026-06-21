@@ -23,6 +23,8 @@ main
 Latest pushed commits:
 
 ```text
+7f1ed77 Fix scan URL submission validation
+f08929c Update project handoff
 efb9f79 Group repeated report title issues
 7837280 Show scan issues in report fixes
 a5a6ec4 Redirect scans to report page
@@ -61,6 +63,14 @@ Completed and pushed:
 - Repeated weak title and weak meta description issues are grouped into one card per issue type.
 - Grouped title/meta cards list affected pages with page label, current title/description text, and character count.
 - Invalid URL attempts are logged as `scan_failed` events with `metadata.reason = "invalid_url"`.
+- Temporary scan URL submission monitoring is enabled until `2026-06-28`. Invalid and started scan events include `metadata.submit_debug` with input lengths and state/form match status.
+
+Delete temporary monitoring data after `2026-06-28`:
+
+```sql
+delete from public.events
+where metadata->'submit_debug'->>'temporaryReason' = 'scan_url_submission_monitoring';
+```
 
 Recent local report smoke test:
 

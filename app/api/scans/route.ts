@@ -13,12 +13,14 @@ export async function POST(request: Request) {
   let body: {
     websiteUrl?: unknown;
     campaign?: unknown;
+    debug?: unknown;
   } | null = null;
 
   try {
     body = (await request.json()) as {
       websiteUrl?: unknown;
       campaign?: unknown;
+      debug?: unknown;
     };
   } catch {
     return NextResponse.json(
@@ -29,6 +31,7 @@ export async function POST(request: Request) {
 
   const websiteUrl = typeof body.websiteUrl === "string" ? body.websiteUrl : "";
   requestCampaign = body.campaign;
+  const submitDebug = sanitizeSubmitDebug(body.debug);
 
   try {
     normalizedUrl = normalizeWebsiteUrl(websiteUrl);
@@ -47,6 +50,7 @@ export async function POST(request: Request) {
               : "Enter a valid website URL.",
           input_length: websiteUrl.trim().length,
           has_input: websiteUrl.trim().length > 0,
+          submit_debug: submitDebug,
           source: "landing_page",
           campaign: sanitizeCampaign(requestCampaign)
         }
@@ -94,7 +98,8 @@ export async function POST(request: Request) {
     website_url: normalizedUrl,
     metadata: {
       source: "landing_page",
-      campaign: sanitizeCampaign(requestCampaign)
+      campaign: sanitizeCampaign(requestCampaign),
+      submit_debug: submitDebug
     }
   });
 
@@ -221,4 +226,41 @@ function sanitizeCampaign(campaign: unknown) {
       .filter(([key, value]) => allowedKeys.has(key) && typeof value === "string")
       .map(([key, value]) => [key, value.slice(0, 200)])
   );
+}
+
+function sanitizeSubmitDebug(debug: unknown) {
+  if (!debug || typeof debug !== "object") {
+    return {};
+  }
+
+  const sanitized: Record<string, boolean | number | string> = {};
+  const entries = Object.entries(debug);
+  const numericKeys = new Set([
+    "formInputLength",
+    "reactStateLength",
+    "submittedInputLength"
+  ]);
+  const stringKeys = new Set([
+    "debugDeleteAfter",
+    "temporaryReason"
+  ]);
+  const booleanKeys = new Set(["stateAndFormMatched"]);
+
+  for (const [key, value] of entries) {
+    if (numericKeys.has(key) && typeof value === "number") {
+      sanitized[key] = Math.max(0, Math.min(value, 500));
+      continue;
+    }
+
+    if (booleanKeys.has(key) && typeof value === "boolean") {
+      sanitized[key] = value;
+      continue;
+    }
+
+    if (stringKeys.has(key) && typeof value === "string") {
+      sanitized[key] = value.slice(0, 80);
+    }
+  }
+
+  return sanitized;
 }

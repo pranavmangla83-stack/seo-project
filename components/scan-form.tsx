@@ -13,6 +13,8 @@ import { normalizeWebsiteUrl } from "@/lib/url";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
+const TEMP_SCAN_DEBUG_DELETE_AFTER = "2026-06-28";
+
 export function ScanForm() {
   const router = useRouter();
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -48,6 +50,7 @@ export function ScanForm() {
     }
 
     const submittedUrl = getSubmittedWebsiteUrl(event.currentTarget, websiteUrl);
+    const submitDebug = getSubmitDebug(event.currentTarget, websiteUrl, submittedUrl);
     setWebsiteUrl(submittedUrl);
 
     try {
@@ -60,7 +63,7 @@ export function ScanForm() {
         website_url: submittedUrl,
         error: "invalid_url"
       });
-      void logInvalidScanAttempt(submittedUrl);
+      void logInvalidScanAttempt(submittedUrl, submitDebug);
       return;
     }
 
@@ -80,7 +83,8 @@ export function ScanForm() {
         },
         body: JSON.stringify({
           websiteUrl: submittedUrl,
-          campaign: getCampaignParams()
+          campaign: getCampaignParams(),
+          debug: submitDebug
         })
       });
 
@@ -232,7 +236,30 @@ function getSubmittedWebsiteUrl(form: HTMLFormElement, fallback: string) {
   return fallback.trim();
 }
 
-async function logInvalidScanAttempt(websiteUrl: string) {
+function getSubmitDebug(
+  form: HTMLFormElement,
+  stateUrl: string,
+  submittedUrl: string
+) {
+  const formData = new FormData(form);
+  const formValue = formData.get("website-url");
+  const formUrl = typeof formValue === "string" ? formValue.trim() : "";
+  const trimmedStateUrl = stateUrl.trim();
+
+  return {
+    debugDeleteAfter: TEMP_SCAN_DEBUG_DELETE_AFTER,
+    formInputLength: formUrl.length,
+    reactStateLength: trimmedStateUrl.length,
+    submittedInputLength: submittedUrl.length,
+    stateAndFormMatched: trimmedStateUrl === formUrl,
+    temporaryReason: "scan_url_submission_monitoring"
+  };
+}
+
+async function logInvalidScanAttempt(
+  websiteUrl: string,
+  debug: ReturnType<typeof getSubmitDebug>
+) {
   try {
     await fetch("/api/scans", {
       method: "POST",
@@ -241,7 +268,8 @@ async function logInvalidScanAttempt(websiteUrl: string) {
       },
       body: JSON.stringify({
         websiteUrl,
-        campaign: getCampaignParams()
+        campaign: getCampaignParams(),
+        debug
       })
     });
   } catch {
