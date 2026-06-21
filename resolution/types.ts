@@ -1,6 +1,8 @@
 export const MVP_ISSUE_TYPES = [
   "missing_title",
   "missing_meta_description",
+  "weak_page_title",
+  "weak_meta_description",
   "missing_h1",
   "thin_content",
   "noindex",

@@ -52,18 +52,18 @@ function detectPageIssues(page: CrawledPage) {
   const facts = extractSeoPageFacts(html, page.url);
   const issues: SeoIssue[] = [];
 
-  if (!facts.title || facts.title.length < 20 || facts.title.length > 65) {
+  if (!facts.title || facts.title.length < 50 || facts.title.length > 60) {
     issues.push({
       pageUrl: page.url,
       issueType: "weak_page_title",
       severity: !facts.title ? "high" : "medium",
       message: !facts.title
-        ? "This page is missing a page title."
-        : "This page title may be too short or too long.",
+        ? "This page is missing a title tag."
+        : "This title tag may be too short or too long.",
       details: {
         title: facts.title,
         length: facts.title.length,
-        recommendedLength: "20-65 characters"
+        recommendedLength: "50-60 characters"
       }
     });
   }
@@ -98,7 +98,8 @@ function detectPageIssues(page: CrawledPage) {
           ? "This page does not have an H1 heading."
           : "This page has more than one H1 heading.",
       details: {
-        h1Count: facts.h1Count
+        h1Count: facts.h1Count,
+        h1Texts: facts.h1Texts
       }
     });
   }

@@ -61,6 +61,52 @@ const RESOLUTION_RULES: ResolutionRule[] = [
       })
   },
   {
+    id: "weak-title-tag-content-v1",
+    matches: (input) =>
+      input.issue.issue_type === "weak_page_title" &&
+      getStringDetail(input, "title") !== "",
+    build: (input) =>
+      basePlan(input, {
+        issueType: "weak_page_title",
+        resolutionType: "content",
+        problemExplanation:
+          "This page has a title tag, but it is too short, too long, or too generic.",
+        businessImpact:
+          "A specific title tag helps Google understand the page and helps customers decide whether to click.",
+        recommendedAction:
+          input.issue.exact_fix ??
+          "Write one specific 50-60 character title tag that matches the page topic, search intent, and business offer.",
+        verificationStep:
+          "Check the page again and confirm the title tag is specific, unique, and 50-60 characters.",
+        expectedOutcome:
+          "The page has a clearer search result title that better matches what customers are looking for.",
+        ruleId: "weak-title-tag-content-v1"
+      })
+  },
+  {
+    id: "weak-meta-description-content-v1",
+    matches: (input) =>
+      input.issue.issue_type === "weak_meta_description" &&
+      getStringDetail(input, "metaDescription") !== "",
+    build: (input) =>
+      basePlan(input, {
+        issueType: "weak_meta_description",
+        resolutionType: "content",
+        problemExplanation:
+          "This page has a meta description, but it is too short, too long, or not clear enough.",
+        businessImpact:
+          "A useful meta description can make the search result clearer and give customers a stronger reason to visit.",
+        recommendedAction:
+          input.issue.exact_fix ??
+          "Write one specific 120-155 character meta description that summarizes the page and gives a clear reason to click.",
+        verificationStep:
+          "Check the page again and confirm the meta description is specific, unique, and 120-155 characters.",
+        expectedOutcome:
+          "The page has a clearer search result description that better explains its value.",
+        ruleId: "weak-meta-description-content-v1"
+      })
+  },
+  {
     id: "missing-h1-content-v1",
     matches: (input) =>
       input.issue.issue_type === "bad_heading_structure" &&

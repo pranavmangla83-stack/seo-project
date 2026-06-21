@@ -60,7 +60,7 @@ function getIssuePriorityProfile(issue: SeoIssue): IssuePriorityProfile {
         businessImpact:
           "The title is one of the strongest signals searchers see before clicking your page.",
         exactFix: (item, page) =>
-          `Write one clear 50-60 character title for this ${formatPageType(
+          `Write one clear 50-60 character title tag for this ${formatPageType(
             page
           )}. Include your main service, product, or location. Current title: "${
             getDetailString(item, "title") || "missing"
@@ -84,9 +84,9 @@ function getIssuePriorityProfile(issue: SeoIssue): IssuePriorityProfile {
         fixDifficulty: "easy",
         confidence: "high",
         businessImpact:
-          "A weak description can reduce clicks because customers do not see a clear reason to visit.",
+          "A weak meta description can reduce clicks because customers do not see a clear reason to visit.",
         exactFix: (item) =>
-          `Write a 120-155 character description that explains the page and gives a reason to click. Current description: "${
+          `Write a 120-155 character meta description that explains the page and gives a reason to click. Current meta description: "${
             getDetailString(item, "metaDescription") || "missing"
           }".`
       };
@@ -96,9 +96,9 @@ function getIssuePriorityProfile(issue: SeoIssue): IssuePriorityProfile {
         fixDifficulty: "easy",
         confidence: "high",
         businessImpact:
-          "Repeated descriptions make pages look the same in search and can lower click-through from useful pages.",
+          "Repeated meta descriptions make pages look the same in search and can lower click-through from useful pages.",
         exactFix: (item) =>
-          `Write a different description for each affected page. Start with these pages: ${formatAffectedPages(
+          `Write a different meta description for each affected page. Start with these pages: ${formatAffectedPages(
             item
           )}.`
       };

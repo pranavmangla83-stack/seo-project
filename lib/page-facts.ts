@@ -5,6 +5,7 @@ export type SeoPageFacts = {
   metaDescription: string;
   h1Count: number;
   h1Text: string;
+  h1Texts: string[];
   canonicalUrl: string;
   robotsMeta: string;
   totalImages: number;
@@ -34,6 +35,7 @@ export function extractSeoPageFacts(html: string, pageUrl: string): SeoPageFacts
     metaDescription,
     h1Count: h1s.length,
     h1Text: h1s[0] ?? "",
+    h1Texts: h1s,
     canonicalUrl: resolveCanonicalUrl(canonicalHref, pageUrl),
     robotsMeta: $('meta[name="robots"]').attr("content")?.toLowerCase() ?? "",
     totalImages: images.length,

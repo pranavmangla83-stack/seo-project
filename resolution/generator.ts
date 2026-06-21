@@ -75,6 +75,8 @@ function shouldGenerateWithAi(plan: ResolutionPlan) {
   return (
     plan.issueType === "missing_title" ||
     plan.issueType === "missing_meta_description" ||
+    plan.issueType === "weak_page_title" ||
+    plan.issueType === "weak_meta_description" ||
     plan.issueType === "missing_h1"
   );
 }
@@ -183,8 +185,10 @@ function createAiOutputs(
 function getTaskPrompt(plan: ResolutionPlan) {
   switch (plan.issueType) {
     case "missing_title":
+    case "weak_page_title":
       return RESOLUTION_PROMPTS.titleSuggestion;
     case "missing_meta_description":
+    case "weak_meta_description":
       return RESOLUTION_PROMPTS.metaDescriptionSuggestion;
     case "missing_h1":
       return RESOLUTION_PROMPTS.h1Suggestion;
@@ -196,18 +200,26 @@ function getTaskPrompt(plan: ResolutionPlan) {
 function getGenerationConstraints(plan: ResolutionPlan) {
   switch (plan.issueType) {
     case "missing_title":
+    case "weak_page_title":
       return [
         "Return one suggestedReplacement only.",
-        "Aim for 45 to 60 characters when possible.",
-        "Make it specific to the page.",
+        "Aim for 50 to 60 characters when possible.",
+        "Make it specific to this exact page, not the whole website.",
+        "Use the page topic, likely customer search intent, and the main service/product/course keyword.",
+        "Include the business location or brand name only when it sounds natural and useful.",
+        "Avoid generic titles like Home, About Us, Default Title, Services, or Blog.",
         "Do not keyword stuff.",
-        "pasteLocation should say: Paste this into the page title or SEO title field."
+        "pasteLocation should say: Paste this into the page title, SEO title, or title tag field."
       ];
     case "missing_meta_description":
+    case "weak_meta_description":
       return [
         "Return one suggestedReplacement only.",
-        "Aim for 140 to 160 characters when possible.",
-        "Make it useful to a potential customer.",
+        "Aim for 120 to 155 characters when possible.",
+        "Summarize this exact page in plain language.",
+        "Match likely customer search intent and include the main offer naturally.",
+        "Give customers a clear reason to click.",
+        "Make it unique compared with other pages.",
         "Do not use spammy sales language.",
         "pasteLocation should say: Paste this into the meta description or SEO description field."
       ];
@@ -236,9 +248,11 @@ function createFallbackGeneratedFix(plan: ResolutionPlan): AiGeneratedFix {
 function getFallbackReplacement(plan: ResolutionPlan) {
   switch (plan.issueType) {
     case "missing_title":
-      return "Add a clear page title for this page.";
+    case "weak_page_title":
+      return "Write a clear 50-60 character title tag for this page.";
     case "missing_meta_description":
-      return "Add a short description that explains what this page offers.";
+    case "weak_meta_description":
+      return "Write a clear 120-155 character meta description for this page.";
     case "missing_h1":
       return "Add one clear main heading for this page.";
     default:
@@ -249,8 +263,10 @@ function getFallbackReplacement(plan: ResolutionPlan) {
 function getPasteLocation(plan: ResolutionPlan) {
   switch (plan.issueType) {
     case "missing_title":
-      return "Paste this into the page title or SEO title field.";
+    case "weak_page_title":
+      return "Paste this into the page title, SEO title, or title tag field.";
     case "missing_meta_description":
+    case "weak_meta_description":
       return "Paste this into the meta description or SEO description field.";
     case "missing_h1":
       return "Paste this as the main heading at the top of the page.";

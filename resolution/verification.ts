@@ -21,8 +21,12 @@ function getExpectedCondition(issueType: MvpIssueType) {
   switch (issueType) {
     case "missing_title":
       return "Page has a non-empty title tag.";
+    case "weak_page_title":
+      return "Page has a specific, unique title tag around 50-60 characters.";
     case "missing_meta_description":
       return "Page has a non-empty meta description.";
+    case "weak_meta_description":
+      return "Page has a specific, unique meta description around 120-155 characters.";
     case "missing_h1":
       return "Page has exactly one H1 heading.";
     case "thin_content":

@@ -2006,26 +2006,104 @@ button {
   margin-top: 1rem;
 }
 
-.premium-affected-pages div {
+.premium-affected-page {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.7rem;
   border: 1px solid #e6e0d8;
   border-radius: 0.85rem;
   background: #fbfaf7;
   padding: 0.85rem 1rem;
 }
 
-.premium-affected-pages strong {
+.premium-fix-story .premium-affected-field {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.premium-fix-story .premium-affected-label {
+  display: block;
+  margin-top: 0;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  color: #071225;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1rem;
+  text-transform: uppercase;
+}
+
+.premium-fix-story .premium-affected-label-page {
+  background: #edf4ff;
+  color: #2563eb;
+}
+
+.premium-fix-story .premium-affected-label-value {
+  background: #fff3db;
+  color: #b45309;
+}
+
+.premium-fix-story .premium-affected-label-suggested {
+  background: #eefdf7;
+  color: #047857;
+}
+
+.premium-fix-story .premium-affected-label-length {
+  background: #eaf8f0;
+  color: #15803d;
+}
+
+.premium-affected-field strong {
   color: #071225;
   font-size: 0.98rem;
   font-weight: 850;
+  line-height: 1.45rem;
+}
+
+.premium-copy-button {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgb(4 120 87 / 0.22);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0.35rem 0.7rem;
+  color: #047857;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1rem;
+}
+
+.premium-copy-button:hover {
+  background: #eefdf7;
+}
+
+.premium-copy-button:focus-visible {
+  outline: 3px solid rgb(4 120 87 / 0.18);
+  outline-offset: 2px;
+}
+
+.premium-fix-story .premium-affected-more {
+  margin: 0.1rem 0 0;
+  width: fit-content;
+  border-radius: 999px;
+  background: #f2f4f7;
+  padding: 0.35rem 0.65rem;
+  color: #625f68;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1rem;
+  text-transform: none;
 }
 
 .premium-fix-story .premium-affected-pages span {
   margin-top: 0;
-  color: #625f68;
-  font-size: 0.98rem;
-  line-height: 1.5rem;
 }
 
 .premium-fix-action-box {
