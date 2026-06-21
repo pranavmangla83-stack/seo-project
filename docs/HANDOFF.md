@@ -63,9 +63,9 @@ Completed and pushed:
 - Repeated weak title and weak meta description issues are grouped into one card per issue type.
 - Grouped title/meta cards list affected pages with page label, current title/description text, and character count.
 - Invalid URL attempts are logged as `scan_failed` events with `metadata.reason = "invalid_url"`.
-- Temporary scan URL submission monitoring is enabled until `2026-06-28`. Invalid and started scan events include `metadata.submit_debug` with input lengths and state/form match status.
+- Temporary scan URL submission monitoring is enabled until the user asks to remove it. Invalid and started scan events include `metadata.submit_debug` with input lengths and state/form match status.
 
-Delete temporary monitoring data after `2026-06-28`:
+When the user asks to delete the temporary monitoring data, run:
 
 ```sql
 delete from public.events

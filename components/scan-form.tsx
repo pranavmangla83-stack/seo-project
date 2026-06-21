@@ -13,8 +13,6 @@ import { normalizeWebsiteUrl } from "@/lib/url";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
-const TEMP_SCAN_DEBUG_DELETE_AFTER = "2026-06-28";
-
 export function ScanForm() {
   const router = useRouter();
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -247,7 +245,6 @@ function getSubmitDebug(
   const trimmedStateUrl = stateUrl.trim();
 
   return {
-    debugDeleteAfter: TEMP_SCAN_DEBUG_DELETE_AFTER,
     formInputLength: formUrl.length,
     reactStateLength: trimmedStateUrl.length,
     submittedInputLength: submittedUrl.length,

@@ -241,7 +241,6 @@ function sanitizeSubmitDebug(debug: unknown) {
     "submittedInputLength"
   ]);
   const stringKeys = new Set([
-    "debugDeleteAfter",
     "temporaryReason"
   ]);
   const booleanKeys = new Set(["stateAndFormMatched"]);
