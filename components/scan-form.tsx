@@ -9,6 +9,7 @@ import {
   trackGoogleAdsConversion
 } from "@/lib/gtag";
 import type { ScanReport } from "@/lib/report";
+import { normalizeWebsiteUrl } from "@/lib/url";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
@@ -46,12 +47,29 @@ export function ScanForm() {
       return;
     }
 
+    const submittedUrl = getSubmittedWebsiteUrl(event.currentTarget, websiteUrl);
+    setWebsiteUrl(submittedUrl);
+
+    try {
+      normalizeWebsiteUrl(submittedUrl);
+    } catch {
+      setState("error");
+      setProgress(0);
+      setMessage("Enter a valid website URL.");
+      trackGaEvent("scan_failed", {
+        website_url: submittedUrl,
+        error: "invalid_url"
+      });
+      void logInvalidScanAttempt(submittedUrl);
+      return;
+    }
+
     isSubmittingRef.current = true;
     setState("submitting");
     setProgress(12);
     setMessage("");
     trackGaEvent("scan_started", {
-      website_url: websiteUrl
+      website_url: submittedUrl
     });
 
     try {
@@ -61,7 +79,7 @@ export function ScanForm() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          websiteUrl,
+          websiteUrl: submittedUrl,
           campaign: getCampaignParams()
         })
       });
@@ -77,7 +95,7 @@ export function ScanForm() {
         setState("error");
         setMessage(data.error ?? "Could not start scan. Please try again.");
         trackGaEvent("scan_failed", {
-          website_url: websiteUrl,
+          website_url: submittedUrl,
           error: data.error ?? "unknown"
         });
         return;
@@ -104,7 +122,7 @@ export function ScanForm() {
       setState("error");
       setMessage("Could not reach the scanner. Please try again.");
       trackGaEvent("scan_failed", {
-        website_url: websiteUrl,
+        website_url: submittedUrl,
         error: "network"
       });
     } finally {
@@ -144,11 +162,16 @@ export function ScanForm() {
         </label>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
+            autoCapitalize="none"
+            autoComplete="url"
+            autoCorrect="off"
             className="home-scan-input"
             id="website-url"
+            inputMode="url"
             name="website-url"
             onChange={(event) => setWebsiteUrl(event.target.value)}
             placeholder="example.com"
+            spellCheck={false}
             type="text"
             value={websiteUrl}
           />
@@ -196,6 +219,34 @@ export function ScanForm() {
       </form>
     </>
   );
+}
+
+function getSubmittedWebsiteUrl(form: HTMLFormElement, fallback: string) {
+  const formData = new FormData(form);
+  const value = formData.get("website-url");
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  return fallback.trim();
+}
+
+async function logInvalidScanAttempt(websiteUrl: string) {
+  try {
+    await fetch("/api/scans", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        websiteUrl,
+        campaign: getCampaignParams()
+      })
+    });
+  } catch {
+    // Best-effort analytics only; the visible validation message is already shown.
+  }
 }
 
 function getCampaignParams() {

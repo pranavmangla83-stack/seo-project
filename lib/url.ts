@@ -1,5 +1,5 @@
 export function normalizeWebsiteUrl(input: string) {
-  const trimmed = input.trim();
+  const trimmed = cleanWebsiteUrlInput(input);
   const withProtocol = /^https?:\/\//i.test(trimmed)
     ? trimmed
     : `https://${trimmed}`;
@@ -16,4 +16,15 @@ export function normalizeWebsiteUrl(input: string) {
 
   url.hash = "";
   return url.toString();
+}
+
+function cleanWebsiteUrlInput(input: string) {
+  return input
+    .trim()
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/^https?\/\//i, (match) => `${match.slice(0, -2)}://`)
+    .replace(/^https?:\/(?!\/)/i, (match) => `${match}/`)
+    .replace(/^https?:\/\//i, (match) => match.toLowerCase())
+    .replace(/\s+/g, "")
+    .replace(/[。．｡]/g, ".");
 }

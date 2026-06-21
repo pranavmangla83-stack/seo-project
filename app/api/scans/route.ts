@@ -45,6 +45,8 @@ export async function POST(request: Request) {
             error instanceof Error
               ? error.message
               : "Enter a valid website URL.",
+          input_length: websiteUrl.trim().length,
+          has_input: websiteUrl.trim().length > 0,
           source: "landing_page",
           campaign: sanitizeCampaign(requestCampaign)
         }
