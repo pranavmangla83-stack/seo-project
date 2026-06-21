@@ -23,13 +23,14 @@ main
 Latest pushed commits:
 
 ```text
+6709e51 Remove fixed scan monitoring delete date
+ce2e5c6 Add temporary scan input monitoring
 7f1ed77 Fix scan URL submission validation
+e34b10b Improve report fix suggestions
 f08929c Update project handoff
 efb9f79 Group repeated report title issues
 7837280 Show scan issues in report fixes
 a5a6ec4 Redirect scans to report page
-bb212db Track invalid scan URL attempts
-5017378 Add SEO report UX and resolution engine
 ```
 
 The local branch is currently even with `origin/main`. Remaining untracked local files are disposable dev logs and reference screenshots:
@@ -63,6 +64,9 @@ Completed and pushed:
 - Repeated weak title and weak meta description issues are grouped into one card per issue type.
 - Grouped title/meta cards list affected pages with page label, current title/description text, and character count.
 - Invalid URL attempts are logged as `scan_failed` events with `metadata.reason = "invalid_url"`.
+- The scan form now reads the real submitted form value with `FormData` instead of relying only on React state.
+- The frontend validates the real submitted value before showing "Scanning website".
+- The shared URL normalizer now accepts plain domains, full URLs, paths, common `https//` or `https:/` typos, whitespace around dots, mobile Unicode dots, and invisible zero-width characters.
 - Temporary scan URL submission monitoring is enabled until the user asks to remove it. Invalid and started scan events include `metadata.submit_debug` with input lengths and state/form match status.
 
 When the user asks to delete the temporary monitoring data, run:
@@ -168,13 +172,25 @@ Recent checks passed:
 
 ```powershell
 .\node_modules\.bin\tsc --noEmit --incremental false
+.\node_modules\.bin\eslint components/scan-form.tsx app/api/scans/route.ts
 .\node_modules\.bin\eslint components/resolution-fixes.tsx app/reports/[scanId]/page.tsx
+npm run build
 ```
 
 Recent report route smoke test:
 
 ```text
 STATUS=200
+```
+
+Recent scan URL checks:
+
+```text
+example.com -> https://example.com/
+www.eduluck.in -> https://www.eduluck.in/
+https://www.eduluck.in/contact -> https://www.eduluck.in/contact
+https//example.com -> accepted and normalized to https://example.com/
+empty input -> 400 Enter a valid website URL.
 ```
 
 Earlier in the work, report/API checks and build checks also passed after the larger report implementation.
